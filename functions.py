@@ -278,6 +278,7 @@ def split_data(X, Y, per_train=0.8):
 def polynomial_features(X, degree):
     """
     Generate polynomial features for input data X up to a given degree.
+    Vandermode matrix of X with degree k is the matrix of shape (n_samples, k+1) with the columns being [1, X, X^2, ..., X^k].
     
     Parameters:
     X (numpy.ndarray): Input data of shape (n_samples, n_features).
@@ -316,9 +317,13 @@ def mse_error(X_test, Y_test, theta):
     Returns:
     float: Mean Squared Error (MSE).
     """
-    N = len(Y_test)
+    N =len(Y_test)
     predictions = predict_poly(X_test, theta)
     error = np.mean((predictions - Y_test)**2)
+    # residuals = predictions - Y_test
+    # mse = (1 / N) * np.linalg.norm(residuals, 2) ** 2
+    # mse2 = (1/N) * np.sum((predictions - Y_test)**2)
+    # print("error = ",error, "and", mse2 , "and", mse)
     return error
 
 #-------------------------------------------------------------------------------------------#
@@ -446,9 +451,9 @@ def SGD_poly(loss, grad_loss, params_f, degree_poly = 2, theta0 = None, alpha = 
         # Save the updated values
         theta_history[epoch] = theta
         if len(params_f) == 3:
-                params_f = (X, y, lam)
-            else:
-                params_f = (X, y)
+            params_f = (X, y, lam)
+        else:
+            params_f = (X, y)
         loss_history[epoch] = loss(theta, params_f)
         grad_norm_history[epoch] = np.mean(grad_loss_vec)
     
@@ -472,7 +477,7 @@ def plot_loss(loss_history, grad_norm_history):
     ax[1].grid(True)
     plt.show()
 
-def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_different_k, title = "Model Prediction"):
+def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_different_k, title = "Model Prediction", VS = False, lamds = None):
     
     if type(thetas_history_different_k) is not list and type(thetas_history_different_k) is not tuple:
         thetas_history_different_k = [thetas_history_different_k]
@@ -482,22 +487,74 @@ def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_differ
     plt.scatter(X_train, Y_train, label="Train data")
     plt.scatter(X_test, Y_test, label="Test data")
 
-    index_c = 0
-    for i,thetas in enumerate(thetas_history_different_k):
-        if i%3 == 0:
+    if VS == False:
+        index_c = 0
+        for i,thetas in enumerate(thetas_history_different_k):
+            if i%3 == 0:
+                x_range = np.linspace(X_train.min(), X_train.max(), 100)
+                y_range = predict_poly(x_range, thetas)
+                degree_poly = thetas.shape[0]
+                plt.plot(x_range, y_range, color=colors[index_c%6], label=f"Model {i}, k = {degree_poly}")
+                index_c +=1
+        plt.grid()
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Model " + title)
+        plt.legend()
+    else:
+        for i,thetas in enumerate(thetas_history_different_k):
             x_range = np.linspace(X_train.min(), X_train.max(), 100)
             y_range = predict_poly(x_range, thetas)
-            degree_poly = thetas.shape[0] - 1
-            plt.plot(x_range, y_range, color=colors[index_c%6], label=f"Model{i}, k = {degree_poly}")
-            index_c +=1
-    plt.grid()
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("Model " + title)
-    plt.legend()
+            degree_poly = thetas.shape[0]
+            if lamds is not None:
+                plt.plot(x_range, y_range, color=colors[i], label=f"Model {i}, k = {degree_poly}, lam = {lamds[i]}")
+            else:
+                plt.plot(x_range, y_range, color=colors[i], label=f"Model {i}, k = {degree_poly}")
+        plt.grid()
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.title("Model " + title)
+        plt.legend()
 
     plt.show()
 
+
+def plot_train_test_error_respect_to_lambda(X_train, Y_train, X_test, Y_test, theta_histories_lambda, lamds, title):
+    """
+    Plot the train and test error for the given thetas history.
+    
+    Parameters:
+    X_train (numpy.ndarray): Train input data.
+    Y_train (numpy.ndarray): Train true labels.
+    X_test (numpy.ndarray): Test input data.
+    Y_test (numpy.ndarray): Test true labels.
+    theta_histories_lambda (list): List of list of thetas history changing for lambda.
+    lamds (list): List of lambda values.
+    title (str): Title for the plot.
+    """
+    if type(theta_histories_lambda) is not list and type(theta_histories_lambda) is not tuple:
+        theta_histories_lambda = [theta_histories_lambda]
+    
+    train_errors = []
+    test_errors = []
+
+    for thetas in theta_histories_lambda:
+        train_error = mse_error(X_train, Y_train, thetas) 
+        test_error = mse_error(X_test, Y_test, thetas)
+        train_errors.append(train_error)
+        test_errors.append(test_error)
+
+    plt.figure(figsize=(10, 5))
+    plt.grid()
+    plt.plot(lamds, train_errors, label="Train Error", marker="o")
+    plt.plot(lamds, test_errors, label="Test Error", marker="o")
+    plt.xlabel("$\lambda$")
+    plt.ylabel("$MSE$")
+    plt.title(title)
+    plt.legend()
+    plt.suptitle("Train and Test Error changing $\lambda$", fontsize=16)
+    plt.tight_layout()
+    plt.show()
 
 def plot_train_test_error_respect_to_k(X_train, Y_train, X_test, Y_test, thetas_histories_different_k, titles):
     """
@@ -514,60 +571,61 @@ def plot_train_test_error_respect_to_k(X_train, Y_train, X_test, Y_test, thetas_
     if type(thetas_histories_different_k[0]) is not list and type(thetas_histories_different_k[0]) is not tuple:
         thetas_histories_different_k = [thetas_histories_different_k]
     
-    num_plots = len(thetas_histories_different_k)
-    num_cols = 2
-    num_rows = (num_plots + num_cols - 1) // num_cols  # Calcola il numero di righe necessario
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
-    index_title = 0
-    axes = axes.flatten()  # Appiattisci l'array di assi per un facile iterazione
-    outputs ={}
+    num_plots = len(titles)
+    fig, axes = plt.subplots(nrows=num_plots, ncols=1, figsize=(10, 5 * num_plots))
+    outputs = {}
 
-    for ax, thetas_history_different_k in zip(axes, thetas_histories_different_k):
+    for ax, thetas_history_different_k, title in zip(axes, thetas_histories_different_k, titles):
         train_errors = []
         test_errors = []
         degrees_k = []
         out = []
-        outputs[titles[index_title]] = out
+        outputs[title] = out
         for thetas in thetas_history_different_k:
             train_error = mse_error(X_train, Y_train, thetas)
             test_error = mse_error(X_test, Y_test, thetas)
             train_errors.append(train_error)
             test_errors.append(test_error)
-            out.append((train_error, test_error, thetas.shape[0] - 1))
-            degrees_k.append(thetas.shape[0] - 1)
+            out.append((train_error, test_error, thetas.shape[0]))
+            degrees_k.append(thetas.shape[0])
 
         ax.grid()
         ax.plot(degrees_k, train_errors, label="Train Error")
         ax.plot(degrees_k, test_errors, label="Test Error")
         ax.set_xlabel("$K$")
         ax.set_ylabel("$MSE$")
-        ax.set_title(titles[index_title])
+        ax.set_title(title)
         ax.legend()
-        index_title += 1
 
     fig.suptitle("Train and Test Error changing K", fontsize=16)
-    
-    # Rimuovi eventuali subplot vuoti
-    for i in range(num_plots, len(axes)):
-        fig.delaxes(axes[i])
-    
     plt.tight_layout()
     plt.show()
 
-    for key in outputs.keys():
-        print(key)
-        for i in range(len(outputs[key])):
-            print(f"K={outputs[key][i][2]}: Train Error={outputs[key][i][0]}, Test Error={outputs[key][i][1]}")
+    # for key in outputs.keys():
+    #     print(key)
+    #     for i in range(len(outputs[key])):
+    #         print(f"K={outputs[key][i][2]}: Train Error={outputs[key][i][0]}, Test Error={outputs[key][i][1]}")
 
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------#
 # MLE and MAP functions for GD, SGD and normal equations
 
+def cholesky(A,b):
+    """
+    Solve the system Ax = b using Cholesky decomposition.
+    we start by solving Ly = b 
+    then L^T x = y.
+    """
+    L = np.linalg.cholesky(A)
+    y = np.linalg.solve(L,b)
+    x = np.linalg.solve(L.T, y)
+    return x
+
 def loss_MLE(theta,params_f): 
     X, Y = params_f
     Phi_X = polynomial_features(X, len(theta)).T 
     
-    return (np.linalg.norm(Phi_X @ theta - Y)**2)/2
+    return (np.linalg.norm(Phi_X @ theta - Y,2)**2)/2
 
 def grad_loss_MLE(theta,params_f): 
     X, Y = params_f
@@ -577,23 +635,16 @@ def grad_loss_MLE(theta,params_f):
 def MLE(D,degree_poly):
     X,Y = D
     K = degree_poly
-    Phi_X = polynomial_features(X, K).T
-    return np.linalg.inv(Phi_X.T @ Phi_X) @ Phi_X.T @ Y
+    Phi_X = polynomial_features(X, K)
+    # np.linalg.inv(Phi_X.T @ Phi_X) @ Phi_X.T @ Y
+    A = Phi_X @ Phi_X.T
+    b = Phi_X @ Y
+    return cholesky(A,b)
 
 def loss_MAP(theta,params_f):
-    """
-    Compute the loss function for MAP estimation.
-
-    inputs:
-    theta: ndarray. Parameters of the model.
-    params_f: tuple. Tuple with the data (X, Y, lambda).
-
-    outputs:
-    loss: float. Loss value.
-    """
     X, Y, lam = params_f
     Phi_X = polynomial_features(X, len(theta)).T
-    return (np.linalg.norm(Phi_X @ theta - Y)**2 + lam * np.linalg.norm(theta) ** 2)/2 
+    return (np.linalg.norm(Phi_X @ theta - Y,2)**2 + lam * np.linalg.norm(theta, 2) ** 2)/2 
 
 def grad_loss_MAP(theta,params_f): 
     X, Y, lam = params_f
@@ -603,8 +654,11 @@ def grad_loss_MAP(theta,params_f):
 def MAP(D, degree_poly, l):
     X,Y = D
     K = degree_poly
+    #np.linalg.inv(Phi_X.T @ Phi_X + l*np.identity(K)) @ Phi_X.T @ Y
     Phi_X = polynomial_features(X, K)
-    return np.linalg.inv(Phi_X.T @ Phi_X + l*np.identity(K)) @ Phi_X.T @ Y
+    A = Phi_X @ Phi_X.T + l*np.identity(K)
+    b = Phi_X @ Y
+    return cholesky(A,b)
 
 
 #-------------------------------------------------------------------------------------------#
