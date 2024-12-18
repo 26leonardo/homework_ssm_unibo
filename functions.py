@@ -159,7 +159,7 @@ def exercise_GD(f, grad_f, params_f = None , x0 = None, true_sol = None, dimensi
     for alpha in alphas:
         x_i, k_i, fval_i, grads_i, err_i, converge_i, message_i = GD(f , grad_f, params_f, x0, maxit=kmax, back_flag=False, alpha=alpha, tolf=tolf, tolx=tolx)
         x.append(x_i)
-        k.append(k_i)
+        k.append(k_i) # number of iteration made 
         fval.append(fval_i)
         grads.append(grads_i)
         err.append(err_i)
@@ -171,14 +171,14 @@ def exercise_GD(f, grad_f, params_f = None , x0 = None, true_sol = None, dimensi
 
     # Plots
     fig = plt.figure(figsize=(12,6))
-
     # Plot the norm of the gradient
     plt.subplot(1,2,1)
     plt.title("Norm of the gradient")
+    plt.yscale('log')  # Set y-axis to logarithmic scale
     for (i,alpha) in enumerate(alphas): 
-        if converge[i]:
+        if converge[i]: 
             line, = plt.plot(err[i],label=r"$\alpha$={}, $k$={}".format(alpha,k[i]))
-            index_1_5 = len(err[i]) // 5
+            index_1_5 = len(err[i]) // 5 # this index is necessary to have the texts on the plot not overlapping
             x_position = index_1_5
             y_position = err[i][index_1_5]
             plt.text(x_position, y_position+(i/5), messages[i], fontsize=12, color=line.get_color())
@@ -194,6 +194,7 @@ def exercise_GD(f, grad_f, params_f = None , x0 = None, true_sol = None, dimensi
     
     if true_sol is not None:
         plt.subplot(1,2,2)
+        plt.yscale('log')  # Set y-axis to logarithmic scale
         plt.title("Distance from true solution")
         for (i,alpha) in enumerate(alphas): 
             if converge[i]:
@@ -471,7 +472,7 @@ def SGD_poly(loss, grad_loss, params_f, degree_poly = 2, theta0 = None, alpha = 
 
 
 
-def plot_loss(loss_history, grad_norm_history):
+def plot_loss(loss_history, grad_norm_history, title = None):
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     ax[0].plot(loss_history)
@@ -485,6 +486,10 @@ def plot_loss(loss_history, grad_norm_history):
     ax[1].set_xlabel("Epoch")
     ax[1].set_ylabel("Gradient Norm")
     ax[1].grid(True)
+    
+    if title:
+        fig.suptitle(title)
+
     plt.show()
 
 def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_different_k, title = "Model Prediction", VS = False, lamds = None):
