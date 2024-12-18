@@ -475,13 +475,13 @@ def plot_loss(loss_history, grad_norm_history):
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     ax[0].plot(loss_history)
-    ax[0].set_title("Loss")
-    ax[0].set_xlabel("Epoch")
+    ax[0].set_title(r"$\ell(\theta; X, Y)$")
+    ax[0].set_xlabel("Epoch/maxit")
     ax[0].set_ylabel("MSE poly")
     ax[0].grid(True)
 
     ax[1].plot(grad_norm_history, color="red")
-    ax[1].set_title("Gradient Norm")
+    ax[1].set_title(r"$\nabla_\theta\ell(\theta; X, Y)$")
     ax[1].set_xlabel("Epoch")
     ax[1].set_ylabel("Gradient Norm")
     ax[1].grid(True)
