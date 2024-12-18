@@ -1,3 +1,13 @@
+'''
+functions are devided into:
+1. Gradient Descent method
+2. General functions
+3. Polynomial regression with gradient descent
+4. Polynomial regression with stochastic gradient descent
+4. Functions for the polynomial regression with stochastic gradient descent
+5. MLE and MAP functions for GD, SGD and normal equations
+'''
+
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
