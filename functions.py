@@ -257,6 +257,20 @@ def plot_step_length(x0, f, grad_f, params_f = None, alpha = None, maxit = 100):
 
 # split the data into training and testing sets
 def split_data(X, Y, per_train=0.8):
+    """
+    Split the data into training and testing sets.
+
+    inputs:
+    X: ndarray. Input data.
+    Y: ndarray. True labels.
+    per_train: float. Percentage of the data to be used for training.
+
+    outputs:
+    X_train: ndarray. Training input data.
+    Y_train: ndarray. Training true labels.
+    X_test: ndarray. Testing input data.
+    Y_test: ndarray. Testing true labels.
+    """
 
     if type(X) is not np.ndarray and type(Y) is not np.ndarray:
         X = np.array(X)
@@ -492,7 +506,7 @@ def plot_loss(loss_history, grad_norm_history, title = None):
 
     plt.show()
 
-def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_different_k, title = "Model Prediction", VS = False, lamds = None):
+def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_different_k, title = " Prediction with differents k", VS = False, lamds = None):
     
     if type(thetas_history_different_k) is not list and type(thetas_history_different_k) is not tuple:
         thetas_history_different_k = [thetas_history_different_k]
@@ -503,6 +517,8 @@ def plot_poly_regression(X_train, Y_train, X_test, Y_test, thetas_history_differ
     plt.scatter(X_test, Y_test, label="Test data")
 
     if VS == False:
+        # it is not a confrontation between different types of models
+        #so we can see only fee of them with differendt k dimensions
         index_c = 0
         for i,thetas in enumerate(thetas_history_different_k):
             if i%3 == 0:
@@ -561,13 +577,14 @@ def plot_train_test_error_respect_to_lambda(X_train, Y_train, X_test, Y_test, th
 
     plt.figure(figsize=(10, 5))
     plt.grid()
+    plt.yscale('log')
     plt.plot(lamds, train_errors, label="Train Error", marker="o")
     plt.plot(lamds, test_errors, label="Test Error", marker="o")
     plt.xlabel("$\lambda$")
     plt.ylabel("$MSE$")
     plt.title(title)
     plt.legend()
-    plt.suptitle("Train and Test Error changing $\lambda$", fontsize=16)
+    plt.suptitle("Train and Test Error changing $\lambda$", fontsize=10)
     plt.tight_layout()
     plt.show()
 
@@ -608,11 +625,12 @@ def plot_train_test_error_respect_to_k(X_train, Y_train, X_test, Y_test, thetas_
         ax.plot(degrees_k, train_errors, label="Train Error")
         ax.plot(degrees_k, test_errors, label="Test Error")
         ax.set_xlabel("$K$")
-        ax.set_ylabel("$MSE$")
+        ax.set_yscale('log')
+        ax.set_ylabel(r"$MSE$")
         ax.set_title(title)
         ax.legend()
 
-    fig.suptitle("Train and Test Error changing K", fontsize=16)
+    fig.suptitle("Train and Test Error changing K", fontsize=10)
     plt.tight_layout()
     plt.show()
 
