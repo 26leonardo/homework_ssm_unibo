@@ -312,7 +312,7 @@ def polynomial_features(X, degree):
     Returns:
     numpy.ndarray: Polynomial features of shape (n_samples, n_polynomial_features).
     """
-    return np.vstack([X**i for i in range(degree)])
+    return np.vstack([X**i for i in range(degree)])#first column all ones
 
 def predict_poly(X_test, theta):
     """
